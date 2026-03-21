@@ -1,0 +1,5 @@
+{
+  "name": "Calculadora de Taverna Conan RP",
+  "description": "Calculadora de pedidos para taverna no Conan RP com conversão automática de Bronze, Prata e Ouro.",
+  "requestFramePermissions": []
+}
