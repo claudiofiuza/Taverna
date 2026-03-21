@@ -197,7 +197,7 @@ export default function App() {
             <Coins className="text-amber-500" size={24} />
             <div>
               <h1 className="text-xl font-bold tracking-tight text-white leading-none">
-                Taverna Conan RP
+                Taverna Lobo Branco
               </h1>
               <p className="text-[10px] text-white/40 italic">Sistema de Gestão</p>
             </div>
