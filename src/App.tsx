@@ -382,7 +382,7 @@ export default function App() {
               <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20 shadow-lg">
                 <div className="flex items-center gap-2 mb-3 text-amber-400">
                   <Sparkles size={16} />
-                  <h2 className="font-bold uppercase tracking-wider text-xs">Scanner de Inventário</h2>
+                  <h2 className="font-bold uppercase tracking-wider text-xs">Ingredientes do Inventário</h2>
                 </div>
                 <p className="text-[10px] text-amber-200/60 mb-4 leading-relaxed">
                   Envie prints do seu inventário ou <span className="text-amber-400 font-bold">cole (Ctrl+V)</span> em qualquer lugar para somar os ingredientes automaticamente.
