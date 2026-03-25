@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { MENU_ITEMS, MenuItem, RECIPES, ALL_INGREDIENTS } from './constants';
-import { Coins, Trash2, Plus, Minus, Receipt, Copy, Check, Package, Calculator, Info, Camera, Loader2, Sparkles } from 'lucide-react';
+import { Coins, Trash2, Plus, Minus, Receipt, Copy, Check, Package, Calculator, Info, Camera, Loader2, Sparkles, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -12,10 +12,19 @@ interface StockState {
   [key: string]: number;
 }
 
+interface PurchaseItem {
+  qty: number;
+  price: number;
+}
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'calculator' | 'stock'>('calculator');
+  const [activeTab, setActiveTab] = useState<'calculator' | 'stock' | 'purchases'>('calculator');
   const [order, setOrder] = useState<OrderState>({});
   const [stock, setStock] = useState<StockState>({});
+  const [buyerName, setBuyerName] = useState('');
+  const [sellerName, setSellerName] = useState('');
+  const [purchaseItems, setPurchaseItems] = useState<{[key: string]: PurchaseItem}>({});
+  const [isSending, setIsSending] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -169,6 +178,81 @@ export default function App() {
     }).sort((a, b) => b.canMake - a.canMake);
   }, [stock]);
 
+  const totalPurchaseBronze = useMemo(() => {
+    return Object.values(purchaseItems).reduce((acc: number, curr: PurchaseItem) => acc + (curr.qty * curr.price), 0);
+  }, [purchaseItems]);
+
+  const purchaseCurrency = useMemo(() => {
+    const gold = Math.floor(totalPurchaseBronze / 10000);
+    const remainingAfterGold = totalPurchaseBronze % 10000;
+    const silver = Math.floor(remainingAfterGold / 100);
+    const bronze = remainingAfterGold % 100;
+    return { gold, silver, bronze };
+  }, [totalPurchaseBronze]);
+
+  const sendToDiscord = async () => {
+    const webhookUrl = 'https://discord.com/api/webhooks/1486473047543386158/9eiT-ngiXNgdC_mctUWx2egMMi31FSm_niq667UtyCBSVwMp7sOeM8DovZflBAPWs_Ll';
+    
+    const items = Object.entries(purchaseItems)
+      .filter(([_, data]) => (data as PurchaseItem).qty > 0)
+      .map(([name, data]) => {
+        const item = data as PurchaseItem;
+        return {
+          name: `📦 ${name}`,
+          value: `**Qtd:** ${item.qty} | **Preço:** ${item.price}bz\n**Subtotal:** ${item.qty * item.price}bz`,
+          inline: true
+        };
+      });
+
+    if (items.length === 0) {
+      alert("Adicione pelo menos um item para registrar a compra.");
+      return;
+    }
+
+    setIsSending(true);
+
+    const totalStr = `${purchaseCurrency.gold > 0 ? `${purchaseCurrency.gold} Ouro, ` : ''}${purchaseCurrency.silver > 0 ? `${purchaseCurrency.silver} Prata, ` : ''}${purchaseCurrency.bronze} Bronze`;
+
+    const embed = {
+      title: "📜 Registro de Compra - Taverna Lobo Branco",
+      description: `O taverneiro realizou uma nova aquisição de suprimentos para o estoque.`,
+      color: 0xf59e0b, // Amber 500
+      thumbnail: {
+        url: "https://i.imgur.com/8Y8X8X8.png" // Placeholder for tavern logo if available
+      },
+      fields: [
+        { name: "👤 Comprador", value: buyerName || "Taverneiro", inline: true },
+        { name: "🤝 Vendedor", value: sellerName || "Vendedor Ambulante", inline: true },
+        { name: "💰 Valor Total da Compra", value: `**${totalStr}** (${totalPurchaseBronze}bz)`, inline: false },
+        { name: "━━━━━━━━━━━━━━━━━━━━━━━━━━", value: " ", inline: false },
+        ...items
+      ],
+      footer: { text: "Sistema de Gestão - Taverna Lobo Branco" },
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ embeds: [embed] })
+      });
+
+      if (response.ok) {
+        alert("Compra registrada com sucesso no Discord!");
+        setPurchaseItems({});
+        setSellerName('');
+      } else {
+        throw new Error("Falha ao enviar para o Discord");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao registrar compra. Verifique o console.");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const categories = ['PROMOÇÕES', 'PRATOS DA CASA', 'COMIDAS', 'BEBIDAS'] as const;
 
   const copySummary = () => {
@@ -221,6 +305,15 @@ export default function App() {
             >
               <Package size={14} />
               Estoque
+            </button>
+            <button 
+              onClick={() => setActiveTab('purchases')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                activeTab === 'purchases' ? 'bg-amber-500 text-black' : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <ShoppingBag size={14} />
+              Compras
             </button>
           </div>
         </header>
@@ -374,7 +467,7 @@ export default function App() {
               </div>
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'stock' ? (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             {/* Stock Input Section */}
             <div className="md:col-span-5 lg:col-span-4 space-y-4">
@@ -517,6 +610,133 @@ export default function App() {
                     Este cálculo mostra a quantidade máxima que você pode produzir de cada item individualmente com base no seu estoque atual. 
                     Produzir um item consumirá os ingredientes e reduzirá a capacidade dos outros.
                   </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            {/* Purchase Form Section */}
+            <div className="md:col-span-5 lg:col-span-4 space-y-4">
+              <div className="bg-[#252525] rounded-xl p-4 border border-white/10 shadow-xl">
+                <div className="flex items-center gap-2 mb-4 text-white/80">
+                  <ShoppingBag size={16} />
+                  <h2 className="font-bold uppercase tracking-wider text-xs">Nova Compra</h2>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-white/30 mb-1 block">Nome do Comprador</label>
+                    <input 
+                      type="text"
+                      value={buyerName}
+                      onChange={(e) => setBuyerName(e.target.value)}
+                      placeholder="Ex: Taverneiro"
+                      className="w-full bg-black/20 border border-white/5 rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-white/30 mb-1 block">Nome do Vendedor</label>
+                    <input 
+                      type="text"
+                      value={sellerName}
+                      onChange={(e) => setSellerName(e.target.value)}
+                      placeholder="Ex: Mercador Errante"
+                      className="w-full bg-black/20 border border-white/5 rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-white/5">
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    <div className="flex flex-col items-center p-2 rounded-lg bg-black/20 border border-amber-500/10">
+                      <span className="text-[9px] text-white/30 uppercase font-bold mb-1">Ouro</span>
+                      <span className="text-xl font-mono font-bold text-amber-400">{purchaseCurrency.gold}</span>
+                    </div>
+                    <div className="flex flex-col items-center p-2 rounded-lg bg-black/20 border border-slate-300/10">
+                      <span className="text-[9px] text-white/30 uppercase font-bold mb-1">Prata</span>
+                      <span className="text-xl font-mono font-bold text-slate-300">{purchaseCurrency.silver}</span>
+                    </div>
+                    <div className="flex flex-col items-center p-2 rounded-lg bg-black/20 border border-orange-400/10">
+                      <span className="text-[9px] text-white/30 uppercase font-bold mb-1">Bronze</span>
+                      <span className="text-xl font-mono font-bold text-orange-400">{purchaseCurrency.bronze}</span>
+                    </div>
+                  </div>
+
+                  <button 
+                    disabled={totalPurchaseBronze === 0 || isSending}
+                    onClick={sendToDiscord}
+                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${
+                      totalPurchaseBronze === 0 || isSending
+                        ? 'bg-white/5 text-white/20 cursor-not-allowed' 
+                        : 'bg-amber-500 text-black hover:bg-amber-400 active:scale-95'
+                    }`}
+                  >
+                    {isSending ? <Loader2 size={18} className="animate-spin" /> : <ShoppingBag size={18} />}
+                    {isSending ? 'Registrando...' : 'Registrar Compra'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Purchase Items List */}
+            <div className="md:col-span-7 lg:col-span-8">
+              <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2 text-white/80">
+                    <Package size={16} />
+                    <h2 className="font-bold uppercase tracking-wider text-xs">Itens para Compra</h2>
+                  </div>
+                  <span className="text-[10px] text-white/30 italic">Baseado no Estoque</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                  {ALL_INGREDIENTS.map(ing => (
+                    <div key={ing} className="p-3 rounded-xl bg-black/20 border border-white/5 flex flex-col gap-3">
+                      <h3 className="text-xs font-bold text-white/90 truncate">{ing}</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[8px] uppercase font-bold text-white/30 block mb-1">Quantidade</label>
+                          <input 
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={purchaseItems[ing]?.qty || ''}
+                            onChange={(e) => {
+                              const qty = parseInt(e.target.value) || 0;
+                              setPurchaseItems(prev => ({
+                                ...prev,
+                                [ing]: { ...prev[ing], qty, price: prev[ing]?.price || 0 }
+                              }));
+                            }}
+                            className="w-full bg-black/40 border border-white/5 rounded px-2 py-1 text-xs font-mono text-amber-400 outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[8px] uppercase font-bold text-white/30 block mb-1">Preço Unit. (bz)</label>
+                          <input 
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={purchaseItems[ing]?.price || ''}
+                            onChange={(e) => {
+                              const price = parseInt(e.target.value) || 0;
+                              setPurchaseItems(prev => ({
+                                ...prev,
+                                [ing]: { ...prev[ing], price, qty: prev[ing]?.qty || 0 }
+                              }));
+                            }}
+                            className="w-full bg-black/40 border border-white/5 rounded px-2 py-1 text-xs font-mono text-amber-400 outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+                      </div>
+                      {purchaseItems[ing]?.qty > 0 && purchaseItems[ing]?.price > 0 && (
+                        <div className="text-right text-[10px] text-white/40 italic">
+                          Subtotal: {purchaseItems[ing].qty * purchaseItems[ing].price}bz
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
