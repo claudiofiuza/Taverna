@@ -183,7 +183,7 @@ export default function App() {
     
     const text = `--- PEDIDO TAVERNA ---\n${lines.join('\n')}\n--------------------\n${totalStr}`;
     
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(text.replace(/\./g, ','));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -245,7 +245,7 @@ export default function App() {
                             <h3 className="text-sm font-medium text-white/90 truncate" title={item.name}>
                               {item.name}
                             </h3>
-                            <p className="text-[10px] text-white/40">{item.priceBz} bz</p>
+                            <p className="text-[10px] text-white/40">{item.priceBz.toString().replace('.', ',')} bz</p>
                           </div>
                           
                           <div className="flex items-center gap-2 bg-black/30 rounded-lg p-1 shrink-0">
@@ -320,7 +320,7 @@ export default function App() {
                     <div className="flex flex-col items-center p-2 rounded-lg bg-black/20 border border-orange-400/10">
                       <span className="text-[9px] text-white/30 uppercase font-bold mb-1">Bronze</span>
                       <div className="flex items-baseline gap-0.5">
-                        <span className="text-2xl font-mono font-bold text-orange-400">{currency.bronze}</span>
+                        <span className="text-2xl font-mono font-bold text-orange-400">{currency.bronze.toString().replace('.', ',')}</span>
                       </div>
                     </div>
                   </div>
@@ -328,7 +328,7 @@ export default function App() {
                   <div className="pt-4 border-t border-white/5 space-y-3">
                     <div className="flex justify-between text-[10px] text-white/30">
                       <span>Total em Bronze</span>
-                      <span className="font-mono">{totalBronze} bz</span>
+                      <span className="font-mono">{totalBronze.toString().replace('.', ',')} bz</span>
                     </div>
                     
                     <button 

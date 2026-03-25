@@ -32,6 +32,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'b5', category: 'BEBIDAS', name: 'Koldskål: Bebida de cacau gelado', priceBz: 12 },
   { id: 'b6', category: 'BEBIDAS', name: 'Myntate: Chá de Hortelã', priceBz: 8 },
   { id: 'b7', category: 'BEBIDAS', name: 'Kaffe', priceBz: 9 },
+  { id: 'b8', category: 'BEBIDAS', name: 'Água Purificada', priceBz: 0.5 },
 ];
 
 export interface IngredientRequirement {
