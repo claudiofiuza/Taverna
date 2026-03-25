@@ -217,9 +217,6 @@ export default function App() {
       title: "📜 Registro de Compra - Taverna Lobo Branco",
       description: `O taverneiro realizou uma nova aquisição de suprimentos para o estoque.`,
       color: 0xf59e0b, // Amber 500
-      thumbnail: {
-        url: "https://i.imgur.com/8Y8X8X8.png" // Placeholder for tavern logo if available
-      },
       fields: [
         { name: "👤 Comprador", value: buyerName || "Taverneiro", inline: true },
         { name: "🤝 Vendedor", value: sellerName || "Vendedor Ambulante", inline: true },
