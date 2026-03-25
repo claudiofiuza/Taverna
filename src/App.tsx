@@ -186,7 +186,7 @@ export default function App() {
     const gold = Math.floor(totalPurchaseBronze / 10000);
     const remainingAfterGold = totalPurchaseBronze % 10000;
     const silver = Math.floor(remainingAfterGold / 100);
-    const bronze = remainingAfterGold % 100;
+    const bronze = Number((remainingAfterGold % 100).toFixed(2));
     return { gold, silver, bronze };
   }, [totalPurchaseBronze]);
 
@@ -199,7 +199,7 @@ export default function App() {
         const item = data as PurchaseItem;
         return {
           name: `📦 ${name}`,
-          value: `**Qtd:** ${item.qty} | **Preço:** ${item.price}bz\n**Subtotal:** ${item.qty * item.price}bz`,
+          value: `**Qtd:** ${item.qty} | **Preço:** ${item.price}bz\n**Subtotal:** ${(item.qty * item.price).toFixed(2)}bz`,
           inline: true
         };
       });
@@ -211,7 +211,7 @@ export default function App() {
 
     setIsSending(true);
 
-    const totalStr = `${purchaseCurrency.gold > 0 ? `${purchaseCurrency.gold} Ouro, ` : ''}${purchaseCurrency.silver > 0 ? `${purchaseCurrency.silver} Prata, ` : ''}${purchaseCurrency.bronze} Bronze`;
+    const totalStr = `${purchaseCurrency.gold > 0 ? `${purchaseCurrency.gold} Ouro, ` : ''}${purchaseCurrency.silver > 0 ? `${purchaseCurrency.silver} Prata, ` : ''}${purchaseCurrency.bronze.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} Bronze`;
 
     const embed = {
       title: "📜 Registro de Compra - Taverna Lobo Branco",
@@ -656,7 +656,7 @@ export default function App() {
                     </div>
                     <div className="flex flex-col items-center p-2 rounded-lg bg-black/20 border border-orange-400/10">
                       <span className="text-[9px] text-white/30 uppercase font-bold mb-1">Bronze</span>
-                      <span className="text-xl font-mono font-bold text-orange-400">{purchaseCurrency.bronze}</span>
+                      <span className="text-xl font-mono font-bold text-orange-400">{purchaseCurrency.bronze.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</span>
                     </div>
                   </div>
 
@@ -697,10 +697,11 @@ export default function App() {
                           <input 
                             type="number"
                             min="0"
+                            step="any"
                             placeholder="0"
                             value={purchaseItems[ing]?.qty || ''}
                             onChange={(e) => {
-                              const qty = parseInt(e.target.value) || 0;
+                              const qty = parseFloat(e.target.value) || 0;
                               setPurchaseItems(prev => ({
                                 ...prev,
                                 [ing]: { ...prev[ing], qty, price: prev[ing]?.price || 0 }
@@ -714,10 +715,11 @@ export default function App() {
                           <input 
                             type="number"
                             min="0"
+                            step="any"
                             placeholder="0"
                             value={purchaseItems[ing]?.price || ''}
                             onChange={(e) => {
-                              const price = parseInt(e.target.value) || 0;
+                              const price = parseFloat(e.target.value) || 0;
                               setPurchaseItems(prev => ({
                                 ...prev,
                                 [ing]: { ...prev[ing], price, qty: prev[ing]?.qty || 0 }
@@ -729,7 +731,7 @@ export default function App() {
                       </div>
                       {purchaseItems[ing]?.qty > 0 && purchaseItems[ing]?.price > 0 && (
                         <div className="text-right text-[10px] text-white/40 italic">
-                          Subtotal: {purchaseItems[ing].qty * purchaseItems[ing].price}bz
+                          Subtotal: {(purchaseItems[ing].qty * purchaseItems[ing].price).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}bz
                         </div>
                       )}
                     </div>
