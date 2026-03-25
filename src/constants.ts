@@ -52,7 +52,7 @@ export const RECIPES: Recipe[] = [
       { name: 'Cebola', amount: 2 },
       { name: 'Batata', amount: 2 },
       { name: 'Mel', amount: 2 },
-      { name: 'Especiaria', amount: 5 },
+      { name: 'Fibra vegetal', amount: 5 },
     ]
   },
   {
@@ -70,7 +70,7 @@ export const RECIPES: Recipe[] = [
       { name: 'Cenoura', amount: 2 },
       { name: 'Abóbora', amount: 1 },
       { name: 'Mel', amount: 5 },
-      { name: 'Especiaria', amount: 5 },
+      { name: 'Fibra vegetal', amount: 5 },
     ]
   },
   {
@@ -79,13 +79,14 @@ export const RECIPES: Recipe[] = [
       { name: 'Trigo', amount: 2 },
       { name: 'Salsinha', amount: 2 },
       { name: 'Carne Saborosa', amount: 1 },
+      { name: 'Repolho', amount: 2 },
     ]
   },
   {
     menuItemId: 'c4', // Gravlax
     ingredients: [
       { name: 'Peixe exótico', amount: 1 },
-      { name: 'Sal', amount: 5 },
+      { name: 'Cristal', amount: 5 },
       { name: 'Ranch Watee', amount: 2 },
       { name: 'Salsinha', amount: 3 },
     ]
@@ -167,5 +168,5 @@ export const RECIPES: Recipe[] = [
 ];
 
 export const ALL_INGREDIENTS = Array.from(
-  new Set(RECIPES.flatMap(r => r.ingredients.map(i => i.name)))
+  new Set([...RECIPES.flatMap(r => r.ingredients.map(i => i.name)), 'Repolho', 'Pedra'])
 ).sort();
